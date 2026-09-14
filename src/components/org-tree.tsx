@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { Network } from "lucide-react";
 import { Avatar } from "@/components/avatar";
 import { RoleBadge } from "@/components/role-badge";
+import { EmptyState } from "@/components/empty-state";
+import { Card } from "@/components/ui/card";
 import type { Profile } from "@/lib/database.types";
 
 function buildTree(profiles: Profile[]) {
@@ -54,13 +57,21 @@ export function OrgTree({ profiles }: { profiles: Profile[] }) {
     .filter((p) => !p.manager_id || !visibleIds.has(p.manager_id))
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  if (roots.length === 0) return <p className="text-sm text-slate-400">No one to show yet.</p>;
+  if (roots.length === 0) {
+    return (
+      <EmptyState
+        icon={Network}
+        title="No one to show yet"
+        description="Use “Add team member” to start building out the org chart."
+      />
+    );
+  }
 
   return (
-    <div className="space-y-1">
+    <Card className="space-y-1 p-3">
       {roots.map((root) => (
         <TreeNode key={root.id} profile={root} byManager={byManager} depth={0} />
       ))}
-    </div>
+    </Card>
   );
 }

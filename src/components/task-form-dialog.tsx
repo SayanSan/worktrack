@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Plus } from "lucide-react";
 import { Dialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Textarea, Select } from "@/components/ui/input";
@@ -57,7 +58,12 @@ export function TaskFormDialog({
   return (
     <>
       <span onClick={() => setOpen(true)}>
-        {trigger ?? <Button>New task</Button>}
+        {trigger ?? (
+          <Button>
+            <Plus className="h-4 w-4" strokeWidth={2.5} />
+            New task
+          </Button>
+        )}
       </span>
       <Dialog open={open} onClose={() => setOpen(false)} title="New task">
         <form onSubmit={handleSubmit} className="space-y-4">

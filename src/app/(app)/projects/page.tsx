@@ -1,7 +1,9 @@
+import { FolderKanban } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/current-user";
 import { ProjectCard } from "@/components/project-card";
 import { NewProjectDialog } from "@/components/new-project-dialog";
+import { EmptyState } from "@/components/empty-state";
 import { canCreateProjects } from "@/lib/permissions";
 import type { Project, TaskStatus } from "@/lib/database.types";
 
@@ -46,7 +48,15 @@ export default async function ProjectsPage() {
       </div>
 
       {!projects || projects.length === 0 ? (
-        <p className="text-sm text-slate-400">No projects yet.</p>
+        <EmptyState
+          icon={FolderKanban}
+          title="No projects yet"
+          description={
+            profile && canCreateProjects(profile.role)
+              ? "Create your first project to start assigning work."
+              : "Projects will show up here once a manager creates one."
+          }
+        />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {(projects as Project[]).map((project) => (

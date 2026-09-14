@@ -1,8 +1,10 @@
 "use client";
 
 import { useTransition } from "react";
+import { ListChecks } from "lucide-react";
 import { Avatar } from "@/components/avatar";
 import { PriorityBadge } from "@/components/status-badge";
+import { EmptyState } from "@/components/empty-state";
 import { Select } from "@/components/ui/input";
 import { formatDueDate } from "@/lib/utils";
 import { updateTaskStatus, deleteTask } from "@/lib/actions/tasks";
@@ -29,7 +31,7 @@ export function TaskList({
   const [, startTransition] = useTransition();
 
   if (tasks.length === 0) {
-    return <p className="text-sm text-slate-400">No tasks yet.</p>;
+    return <EmptyState icon={ListChecks} title="No tasks yet" />;
   }
 
   return (

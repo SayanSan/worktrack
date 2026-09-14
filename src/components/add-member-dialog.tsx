@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { UserPlus } from "lucide-react";
 import { Dialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label, Select } from "@/components/ui/input";
@@ -36,6 +37,7 @@ export function AddMemberDialog({
   return (
     <>
       <Button variant="secondary" size="sm" onClick={() => setOpen(true)}>
+        <UserPlus className="h-3.5 w-3.5" strokeWidth={2.5} />
         Add member
       </Button>
       <Dialog open={open} onClose={() => setOpen(false)} title="Add member">

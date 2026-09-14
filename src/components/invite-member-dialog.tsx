@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { UserPlus } from "lucide-react";
 import { Dialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
@@ -48,7 +49,10 @@ export function InviteMemberDialog({
 
   return (
     <>
-      <Button onClick={() => { setOpen(true); setSuccess(false); }}>Add team member</Button>
+      <Button onClick={() => { setOpen(true); setSuccess(false); }}>
+        <UserPlus className="h-4 w-4" strokeWidth={2.5} />
+        Add team member
+      </Button>
       <Dialog open={open} onClose={() => setOpen(false)} title="Add team member">
         {success ? (
           <div>

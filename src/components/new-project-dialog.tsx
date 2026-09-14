@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Plus } from "lucide-react";
 import { Dialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Textarea } from "@/components/ui/input";
@@ -29,7 +30,10 @@ export function NewProjectDialog() {
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>New project</Button>
+      <Button onClick={() => setOpen(true)}>
+        <Plus className="h-4 w-4" strokeWidth={2.5} />
+        New project
+      </Button>
       <Dialog open={open} onClose={() => setOpen(false)} title="New project">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

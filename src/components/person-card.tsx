@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar } from "@/components/avatar";
 import { RoleBadge } from "@/components/role-badge";
@@ -21,7 +22,7 @@ export function PersonCard({
   const remaining = tasks.length - visible.length;
 
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col transition-shadow hover:shadow-md">
       <CardHeader className="flex flex-row items-center gap-3">
         <Avatar name={profile.name} />
         <div className="min-w-0 flex-1">
@@ -39,7 +40,10 @@ export function PersonCard({
       </CardHeader>
       <CardContent className="flex-1 pt-0">
         {visible.length === 0 ? (
-          <p className="py-2 text-sm text-slate-400">No active tasks.</p>
+          <div className="flex items-center gap-1.5 py-2 text-sm text-slate-400">
+            <CheckCircle2 className="h-4 w-4 text-emerald-400" strokeWidth={1.75} />
+            All caught up
+          </div>
         ) : (
           <ul className="space-y-2">
             {visible.map((task) => (

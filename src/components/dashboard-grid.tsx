@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Users } from "lucide-react";
 import { PersonCard, type TaskWithProject } from "@/components/person-card";
+import { EmptyState } from "@/components/empty-state";
 import { Select } from "@/components/ui/input";
 import type { Profile, TaskStatus } from "@/lib/database.types";
 
@@ -66,7 +68,11 @@ export function DashboardGrid({
       </div>
 
       {profiles.length === 0 ? (
-        <p className="text-sm text-slate-400">No one to show yet.</p>
+        <EmptyState
+          icon={Users}
+          title="No one to show yet"
+          description="Add your team from the Team page to start seeing who's working on what."
+        />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {profiles.map((profile) => (
