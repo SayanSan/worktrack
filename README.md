@@ -1,36 +1,31 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# WorkTrack
 
-## Getting Started
+A simplified, Jira-like work organizer. Everyone sees who's working on what, scoped to the reporting hierarchy: **Malik → Boss → Managers → Associates → Interns**.
 
-First, run the development server:
+## Setup
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1. Create a free project at [supabase.com](https://supabase.com).
+2. Copy `.env.local.example` to `.env.local` and fill in your Project URL, anon key, and service role key (Project Settings → API).
+3. In the Supabase SQL editor, run the two files in `supabase/migrations/` in order (`0001_init.sql`, then `0002_rls.sql`).
+4. In Supabase Auth settings, set the **Site URL** and add a redirect URL for `http://localhost:3000/auth/callback` (and your production URL later).
+5. Install dependencies and start the app:
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+   ```bash
+   npm install
+   npm run dev
+   ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+6. (Optional) Seed a sample org — 5 roles, 2 projects, a handful of tasks — so you can see how visibility differs per role:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+   ```bash
+   npm run seed
+   ```
 
-## Learn More
+   All seeded accounts share the password printed by the script.
 
-To learn more about Next.js, take a look at the following resources:
+## How it works
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Auth**: Supabase email/password. There's no public sign-up — a manager or above adds a new hire from the **Team** page, which sends them an email invite to set their password.
+- **Visibility**: enforced by Postgres Row Level Security, not just the UI. Malik/Boss see the whole org; everyone else sees themselves plus everyone below them in the `manager_id` chain (`supabase/migrations/0002_rls.sql`).
+- **Dashboard**: a grid of per-person cards showing each visible teammate's active tasks — the primary "who's working on what" view (no kanban board).
+- **Projects**: project-cards → task lists grouped by status, with inline status updates.

@@ -32,9 +32,15 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.local.example
 
 # vercel
 .vercel
+
+# agent skill tooling (local dev aid, not part of the app)
+.agents/
+.claude/skills/
+skills-lock.json
 
 # typescript
 *.tsbuildinfo
