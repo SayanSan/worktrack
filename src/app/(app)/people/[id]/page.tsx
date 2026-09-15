@@ -14,19 +14,21 @@ export default async function PersonDetailPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: profile }, { data: manager }, { data: tasks }] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", id).maybeSingle(),
-    supabase
-      .from("profiles")
-      .select("manager:profiles!profiles_manager_id_fkey(id, name, role)")
-      .eq("id", id)
-      .maybeSingle(),
-    supabase
-      .from("tasks")
-      .select("*, assignee:profiles!tasks_assignee_id_fkey(id, name), project:projects(id, name)")
-      .eq("assignee_id", id)
-      .order("created_at", { ascending: false }),
-  ]);
+  const [{ data: profile }, { data: manager }, { data: tasks }, { data: visibleProfiles }] =
+    await Promise.all([
+      supabase.from("profiles").select("*").eq("id", id).maybeSingle(),
+      supabase
+        .from("profiles")
+        .select("manager:profiles!profiles_manager_id_fkey(id, name, role)")
+        .eq("id", id)
+        .maybeSingle(),
+      supabase
+        .from("tasks")
+        .select("*, assignee:profiles!tasks_assignee_id_fkey(id, name), project:projects(id, name)")
+        .eq("assignee_id", id)
+        .order("created_at", { ascending: false }),
+      supabase.from("profiles").select("id, name"),
+    ]);
 
   if (!profile) notFound();
   const p = profile as Profile;
@@ -57,7 +59,11 @@ export default async function PersonDetailPage({
       </div>
 
       <h2 className="mb-3 text-sm font-semibold text-slate-700">Tasks</h2>
-      <TaskList tasks={(tasks ?? []) as TaskWithAssignee[]} />
+      <TaskList
+        tasks={(tasks ?? []) as TaskWithAssignee[]}
+        canEdit
+        assignees={visibleProfiles ?? []}
+      />
     </div>
   );
 }

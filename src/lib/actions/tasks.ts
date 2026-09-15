@@ -1,8 +1,43 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { sendTaskAssignedEmail } from "@/lib/email";
 import type { TaskPriority, TaskStatus } from "@/lib/database.types";
+
+async function getAppUrl() {
+  const hdrs = await headers();
+  const host = hdrs.get("host");
+  const protocol = host?.startsWith("localhost") ? "http" : "https";
+  return `${protocol}://${host}`;
+}
+
+async function notifyAssignee(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  input: { assigneeId: string; assignedById: string; projectId: string; taskTitle: string; dueDate: string | null }
+) {
+  if (input.assigneeId === input.assignedById) return; // don't email yourself
+
+  const [{ data: assignee }, { data: assignedBy }, { data: project }, appUrl] = await Promise.all([
+    supabase.from("profiles").select("name, email").eq("id", input.assigneeId).single(),
+    supabase.from("profiles").select("name").eq("id", input.assignedById).single(),
+    supabase.from("projects").select("name").eq("id", input.projectId).single(),
+    getAppUrl(),
+  ]);
+
+  if (!assignee?.email) return;
+
+  await sendTaskAssignedEmail({
+    to: assignee.email,
+    assigneeName: assignee.name,
+    taskTitle: input.taskTitle,
+    projectName: project?.name ?? "a project",
+    assignedByName: assignedBy?.name ?? "Someone",
+    dueDate: input.dueDate,
+    appUrl,
+  });
+}
 
 export async function createTask(input: {
   projectId: string;
@@ -30,6 +65,17 @@ export async function createTask(input: {
   });
 
   if (error) throw new Error(error.message);
+
+  if (input.assigneeId) {
+    await notifyAssignee(supabase, {
+      assigneeId: input.assigneeId,
+      assignedById: user.id,
+      projectId: input.projectId,
+      taskTitle: input.title,
+      dueDate: input.dueDate || null,
+    });
+  }
+
   revalidatePath("/dashboard");
   revalidatePath(`/projects/${input.projectId}`);
   revalidatePath("/tasks");
@@ -56,6 +102,17 @@ export async function updateTask(
   }>
 ) {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { data: existing } = await supabase
+    .from("tasks")
+    .select("assignee_id, project_id, title, due_date")
+    .eq("id", taskId)
+    .single();
+
   const { error } = await supabase
     .from("tasks")
     .update({
@@ -68,6 +125,18 @@ export async function updateTask(
     })
     .eq("id", taskId);
   if (error) throw new Error(error.message);
+
+  const newAssigneeId = input.assigneeId !== undefined ? input.assigneeId : existing?.assignee_id;
+  if (newAssigneeId && existing && newAssigneeId !== existing.assignee_id) {
+    await notifyAssignee(supabase, {
+      assigneeId: newAssigneeId,
+      assignedById: user.id,
+      projectId: existing.project_id,
+      taskTitle: input.title ?? existing.title,
+      dueDate: input.dueDate !== undefined ? input.dueDate : existing.due_date,
+    });
+  }
+
   revalidatePath("/dashboard");
   revalidatePath("/tasks");
   revalidatePath("/projects", "layout");

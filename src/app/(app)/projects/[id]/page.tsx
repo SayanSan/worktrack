@@ -69,7 +69,12 @@ export default async function ProjectDetailPage({
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_260px]">
         <div>
           <h2 className="mb-3 text-sm font-semibold text-slate-700">Tasks</h2>
-          <TaskList tasks={(tasks ?? []) as TaskWithAssignee[]} canDelete={canManage} />
+          <TaskList
+            tasks={(tasks ?? []) as TaskWithAssignee[]}
+            canDelete={canManage}
+            canEdit={canManage}
+            assignees={members.map((m) => ({ id: m.id, name: m.name }))}
+          />
         </div>
 
         <div>

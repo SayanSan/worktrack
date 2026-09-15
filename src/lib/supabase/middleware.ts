@@ -23,9 +23,11 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims() verifies the JWT locally (no round trip to Supabase) whenever the
+  // project uses asymmetric signing keys, unlike getUser() which always calls out.
+  // Fine for a redirect-only check — actual data access is still enforced by RLS.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims;
 
   const isAuthRoute =
     request.nextUrl.pathname.startsWith("/login") ||

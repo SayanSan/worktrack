@@ -5,24 +5,35 @@ import { Plus } from "lucide-react";
 import { Dialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Textarea, Select } from "@/components/ui/input";
-import { createTask } from "@/lib/actions/tasks";
+import { createTask, updateTask } from "@/lib/actions/tasks";
 import type { TaskPriority } from "@/lib/database.types";
+import type { TaskWithAssignee } from "@/components/task-list";
 
 export function TaskFormDialog({
   projectId,
   assignees,
   trigger,
+  task,
+  open: openProp,
+  onOpenChange,
 }: {
-  projectId: string;
+  projectId?: string;
   assignees: { id: string; name: string }[];
   trigger?: React.ReactNode;
+  task?: TaskWithAssignee;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [assigneeId, setAssigneeId] = useState("");
-  const [priority, setPriority] = useState<TaskPriority>("medium");
-  const [dueDate, setDueDate] = useState("");
+  const isEdit = Boolean(task);
+  const [openState, setOpenState] = useState(false);
+  const open = openProp ?? openState;
+  const setOpen = onOpenChange ?? setOpenState;
+
+  const [title, setTitle] = useState(task?.title ?? "");
+  const [description, setDescription] = useState(task?.description ?? "");
+  const [assigneeId, setAssigneeId] = useState(task?.assignee_id ?? "");
+  const [priority, setPriority] = useState<TaskPriority>(task?.priority ?? "medium");
+  const [dueDate, setDueDate] = useState(task?.due_date ?? "");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -39,15 +50,25 @@ export function TaskFormDialog({
     setError(null);
     startTransition(async () => {
       try {
-        await createTask({
-          projectId,
-          title,
-          description,
-          assigneeId: assigneeId || null,
-          priority,
-          dueDate: dueDate || null,
-        });
-        reset();
+        if (isEdit && task) {
+          await updateTask(task.id, {
+            title,
+            description: description || null,
+            assigneeId: assigneeId || null,
+            priority,
+            dueDate: dueDate || null,
+          });
+        } else if (projectId) {
+          await createTask({
+            projectId,
+            title,
+            description,
+            assigneeId: assigneeId || null,
+            priority,
+            dueDate: dueDate || null,
+          });
+          reset();
+        }
         setOpen(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Something went wrong");
@@ -57,15 +78,17 @@ export function TaskFormDialog({
 
   return (
     <>
-      <span onClick={() => setOpen(true)}>
-        {trigger ?? (
-          <Button>
-            <Plus className="h-4 w-4" strokeWidth={2.5} />
-            New task
-          </Button>
-        )}
-      </span>
-      <Dialog open={open} onClose={() => setOpen(false)} title="New task">
+      {openProp === undefined && (
+        <span onClick={() => setOpen(true)}>
+          {trigger ?? (
+            <Button>
+              <Plus className="h-4 w-4" strokeWidth={2.5} />
+              New task
+            </Button>
+          )}
+        </span>
+      )}
+      <Dialog open={open} onClose={() => setOpen(false)} title={isEdit ? "Edit task" : "New task"}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="title">Title</Label>
@@ -76,14 +99,14 @@ export function TaskFormDialog({
             <Textarea
               id="description"
               rows={3}
-              value={description}
+              value={description ?? ""}
               onChange={(e) => setDescription(e.target.value)}
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="assignee">Assignee</Label>
-              <Select id="assignee" value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)}>
+              <Select id="assignee" value={assigneeId ?? ""} onChange={(e) => setAssigneeId(e.target.value)}>
                 <option value="">Unassigned</option>
                 {assignees.map((a) => (
                   <option key={a.id} value={a.id}>
@@ -110,7 +133,7 @@ export function TaskFormDialog({
             <Input
               id="dueDate"
               type="date"
-              value={dueDate}
+              value={dueDate ?? ""}
               onChange={(e) => setDueDate(e.target.value)}
             />
           </div>
@@ -120,7 +143,7 @@ export function TaskFormDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={pending}>
-              {pending ? "Creating…" : "Create task"}
+              {pending ? "Saving…" : isEdit ? "Save changes" : "Create task"}
             </Button>
           </div>
         </form>

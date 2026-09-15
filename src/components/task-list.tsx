@@ -1,11 +1,12 @@
 "use client";
 
-import { useTransition } from "react";
-import { ListChecks } from "lucide-react";
+import { useState, useTransition } from "react";
+import { ListChecks, Pencil } from "lucide-react";
 import { Avatar } from "@/components/avatar";
 import { PriorityBadge } from "@/components/status-badge";
 import { EmptyState } from "@/components/empty-state";
 import { Select } from "@/components/ui/input";
+import { TaskFormDialog } from "@/components/task-form-dialog";
 import { formatDueDate } from "@/lib/utils";
 import { updateTaskStatus, deleteTask } from "@/lib/actions/tasks";
 import type { Task, TaskStatus } from "@/lib/database.types";
@@ -24,11 +25,16 @@ export interface TaskWithAssignee extends Task {
 export function TaskList({
   tasks,
   canDelete,
+  canEdit,
+  assignees = [],
 }: {
   tasks: TaskWithAssignee[];
   canDelete?: boolean;
+  canEdit?: boolean;
+  assignees?: { id: string; name: string }[];
 }) {
   const [, startTransition] = useTransition();
+  const [editingTask, setEditingTask] = useState<TaskWithAssignee | null>(null);
 
   if (tasks.length === 0) {
     return <EmptyState icon={ListChecks} title="No tasks yet" />;
@@ -69,6 +75,15 @@ export function TaskList({
                     <option value="in_review">In review</option>
                     <option value="done">Done</option>
                   </Select>
+                  {canEdit && (
+                    <button
+                      onClick={() => setEditingTask(task)}
+                      className="shrink-0 text-slate-300 hover:text-slate-700"
+                      aria-label="Edit task"
+                    >
+                      <Pencil className="h-3.5 w-3.5" strokeWidth={2} />
+                    </button>
+                  )}
                   {canDelete && (
                     <button
                       onClick={() => startTransition(() => deleteTask(task.id))}
@@ -84,6 +99,15 @@ export function TaskList({
           </div>
         );
       })}
+
+      {editingTask && (
+        <TaskFormDialog
+          task={editingTask}
+          assignees={assignees}
+          open={Boolean(editingTask)}
+          onOpenChange={(open) => !open && setEditingTask(null)}
+        />
+      )}
     </div>
   );
 }
