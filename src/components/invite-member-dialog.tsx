@@ -22,7 +22,6 @@ export function InviteMemberDialog({
   const topMgmt = isTopManagement(currentRole);
 
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<UserRole>(invitableRoles[0]);
   const [managerId, setManagerId] = useState(topMgmt ? managerCandidates[0]?.id ?? "" : currentUserId);
@@ -37,9 +36,8 @@ export function InviteMemberDialog({
     setError(null);
     startTransition(async () => {
       try {
-        await inviteTeamMember({ name, email, role, managerId: managerId || currentUserId });
+        await inviteTeamMember({ email, role, managerId: managerId || currentUserId });
         setSuccess(true);
-        setName("");
         setEmail("");
       } catch (err) {
         setError(err instanceof Error ? err.message : "Something went wrong");
@@ -57,7 +55,8 @@ export function InviteMemberDialog({
         {success ? (
           <div>
             <p className="text-sm text-slate-600">
-              Invite sent — they&apos;ll get an email to set their password.
+              Done — as soon as they sign in with Google using that email, they&apos;ll land in the org
+              with this role and reporting line already set.
             </p>
             <div className="mt-4 flex justify-end">
               <Button onClick={() => setOpen(false)}>Done</Button>
@@ -66,15 +65,12 @@ export function InviteMemberDialog({
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" required value={name} onChange={(e) => setName(e.target.value)} />
-            </div>
-            <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Google email</Label>
               <Input
                 id="email"
                 type="email"
                 required
+                placeholder="name@company.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -107,7 +103,7 @@ export function InviteMemberDialog({
                 Cancel
               </Button>
               <Button type="submit" disabled={pending}>
-                {pending ? "Sending…" : "Send invite"}
+                {pending ? "Saving…" : "Authorize"}
               </Button>
             </div>
           </form>

@@ -42,6 +42,14 @@ export type Task = {
   updated_at: string;
 };
 
+export type Invite = {
+  email: string;
+  role: UserRole;
+  manager_id: string | null;
+  invited_by: string;
+  created_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -116,6 +124,27 @@ export type Database = {
           {
             foreignKeyName: "tasks_created_by_fkey";
             columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      invites: {
+        Row: Invite;
+        Insert: Partial<Invite> & { email: string; role: UserRole; invited_by: string };
+        Update: Partial<Invite>;
+        Relationships: [
+          {
+            foreignKeyName: "invites_manager_id_fkey";
+            columns: ["manager_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "invites_invited_by_fkey";
+            columns: ["invited_by"];
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];

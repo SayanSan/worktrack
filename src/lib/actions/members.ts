@@ -2,12 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { INVITABLE_ROLES } from "@/lib/permissions";
 import type { UserRole } from "@/lib/database.types";
 
 export async function inviteTeamMember(input: {
-  name: string;
   email: string;
   role: UserRole;
   managerId: string; // reports to
@@ -34,9 +32,11 @@ export async function inviteTeamMember(input: {
     throw new Error("You can only add direct reports under yourself");
   }
 
-  const admin = createAdminClient();
-  const { error } = await admin.auth.admin.inviteUserByEmail(input.email, {
-    data: { name: input.name, role: input.role, manager_id: input.managerId },
+  const { error } = await supabase.from("invites").upsert({
+    email: input.email.trim().toLowerCase(),
+    role: input.role,
+    manager_id: input.managerId,
+    invited_by: user.id,
   });
 
   if (error) throw new Error(error.message);
