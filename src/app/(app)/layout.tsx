@@ -1,22 +1,15 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { LayoutGrid, FolderKanban, ListChecks, Users2, LogOut, Waypoints } from "lucide-react";
+import { LogOut, Waypoints } from "lucide-react";
 import { getCurrentProfile } from "@/lib/current-user";
 import { RoleBadge } from "@/components/role-badge";
 import { Avatar } from "@/components/avatar";
-import { NavLink } from "@/components/nav-link";
+import { MainNav } from "@/components/main-nav";
 import { signOut } from "@/lib/actions/auth";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const profile = await getCurrentProfile();
   if (!profile) redirect("/login");
-
-  const navItems = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutGrid },
-    { href: "/projects", label: "Projects", icon: FolderKanban },
-    { href: "/tasks", label: "My Tasks", icon: ListChecks },
-    { href: "/team", label: "Team", icon: Users2 },
-  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-100 to-slate-50">
@@ -29,11 +22,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               </span>
               <span className="text-sm font-semibold tracking-tight text-slate-900">WorkTrack</span>
             </Link>
-            <nav className="flex items-center gap-1">
-              {navItems.map((item) => (
-                <NavLink key={item.href} {...item} />
-              ))}
-            </nav>
+            <MainNav />
           </div>
           <div className="flex items-center gap-3">
             <Link
