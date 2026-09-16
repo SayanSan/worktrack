@@ -1,11 +1,18 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+// Sends via a real Gmail/Google Workspace mailbox (an "app password", not the
+// account password) instead of a transactional email provider — no domain
+// verification needed, and it can deliver to any recipient immediately.
+const GMAIL_USER = process.env.GMAIL_USER;
+const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
 
-// Resend's shared sandbox sender — works with no domain setup, but only reaches
-// the email address on your Resend account until you verify your own domain.
-// Swap in a verified "you@yourdomain.com" via RESEND_FROM_EMAIL once you have one.
-const FROM = process.env.RESEND_FROM_EMAIL || "WorkTrack <onboarding@resend.dev>";
+const transporter =
+  GMAIL_USER && GMAIL_APP_PASSWORD
+    ? nodemailer.createTransport({
+        service: "gmail",
+        auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD },
+      })
+    : null;
 
 export async function sendTaskAssignedEmail(input: {
   to: string;
@@ -16,14 +23,14 @@ export async function sendTaskAssignedEmail(input: {
   dueDate: string | null;
   appUrl: string;
 }) {
-  if (!resend) {
-    console.warn("RESEND_API_KEY is not set — skipping task assignment email.");
+  if (!transporter) {
+    console.warn("GMAIL_USER / GMAIL_APP_PASSWORD not set — skipping task assignment email.");
     return;
   }
 
   try {
-    await resend.emails.send({
-      from: FROM,
+    await transporter.sendMail({
+      from: `WorkTrack <${GMAIL_USER}>`,
       to: input.to,
       subject: `New task assigned: ${input.taskTitle}`,
       html: `
