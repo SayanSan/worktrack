@@ -39,7 +39,7 @@ export default async function ProjectsPage() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="mb-1 text-lg font-semibold text-slate-900">Projects</h1>
           <p className="text-sm text-slate-500">Everything the team is currently working on.</p>
