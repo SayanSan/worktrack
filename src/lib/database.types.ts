@@ -187,6 +187,10 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      apply_pending_invite: {
+        Args: Record<string, never>;
+        Returns: undefined;
+      };
       claim_invite_link: {
         Args: { p_token: string };
         Returns: undefined;
