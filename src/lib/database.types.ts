@@ -10,6 +10,7 @@ export type Profile = {
   role: UserRole;
   manager_id: string | null;
   avatar_url: string | null;
+  onboarded: boolean;
   created_at: string;
 };
 
