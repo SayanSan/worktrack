@@ -51,6 +51,17 @@ export type Invite = {
   created_at: string;
 };
 
+export type InviteLink = {
+  id: string;
+  token: string;
+  role: UserRole;
+  manager_id: string;
+  created_by: string;
+  expires_at: string | null;
+  revoked_at: string | null;
+  created_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -152,9 +163,39 @@ export type Database = {
           },
         ];
       };
+      invite_links: {
+        Row: InviteLink;
+        Insert: Partial<InviteLink> & { token: string; role: UserRole; manager_id: string; created_by: string };
+        Update: Partial<InviteLink>;
+        Relationships: [
+          {
+            foreignKeyName: "invite_links_manager_id_fkey";
+            columns: ["manager_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "invite_links_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      claim_invite_link: {
+        Args: { p_token: string };
+        Returns: undefined;
+      };
+      invite_link_info: {
+        Args: { p_token: string };
+        Returns: { role: UserRole; inviter_name: string; valid: boolean }[];
+      };
+    };
     Enums: {
       user_role: UserRole;
       project_status: ProjectStatus;

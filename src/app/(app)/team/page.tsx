@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/current-user";
 import { OrgTree } from "@/components/org-tree";
 import { InviteMemberDialog } from "@/components/invite-member-dialog";
+import { InviteLinkDialog } from "@/components/invite-link-dialog";
 import { ROLE_ORDER } from "@/lib/permissions";
 import type { Profile } from "@/lib/database.types";
 
@@ -23,11 +24,14 @@ export default async function TeamPage() {
           <h1 className="mb-1 text-lg font-semibold text-slate-900">Team</h1>
           <p className="text-sm text-slate-500">Who reports to whom.</p>
         </div>
-        <InviteMemberDialog
-          currentUserId={profile.id}
-          currentRole={profile.role}
-          managerCandidates={managerCandidates}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <InviteLinkDialog currentRole={profile.role} />
+          <InviteMemberDialog
+            currentUserId={profile.id}
+            currentRole={profile.role}
+            managerCandidates={managerCandidates}
+          />
+        </div>
       </div>
       <OrgTree profiles={(profiles ?? []) as Profile[]} />
     </div>
