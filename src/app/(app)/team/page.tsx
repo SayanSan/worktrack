@@ -3,7 +3,8 @@ import { getCurrentProfile } from "@/lib/current-user";
 import { OrgTree } from "@/components/org-tree";
 import { InviteMemberDialog } from "@/components/invite-member-dialog";
 import { InviteLinkDialog } from "@/components/invite-link-dialog";
-import { ROLE_ORDER } from "@/lib/permissions";
+import { ManageMembers } from "@/components/manage-members";
+import { ROLE_ORDER, isTopManagement } from "@/lib/permissions";
 import type { Profile } from "@/lib/database.types";
 
 export default async function TeamPage() {
@@ -34,6 +35,7 @@ export default async function TeamPage() {
         </div>
       </div>
       <OrgTree profiles={(profiles ?? []) as Profile[]} />
+      {isTopManagement(profile.role) && <ManageMembers profiles={(profiles ?? []) as Profile[]} />}
     </div>
   );
 }
