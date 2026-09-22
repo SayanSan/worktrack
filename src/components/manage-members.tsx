@@ -93,7 +93,10 @@ export function ManageMembers({ profiles }: { profiles: Profile[] }) {
         {sorted.map((p) => (
           <div key={p.id} className="flex items-center gap-3 px-3 py-2.5">
             <Avatar name={p.name} size="sm" />
-            <span className="min-w-0 flex-1 truncate text-sm text-slate-800">{p.name}</span>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm text-slate-800">{p.name}</div>
+              <div className="truncate text-xs text-slate-400">{p.email}</div>
+            </div>
             <RoleBadge role={p.role} />
             <span className="hidden w-40 truncate text-right text-xs text-slate-400 sm:block">
               {p.manager_id ? `→ ${byId.get(p.manager_id)?.name ?? "—"}` : "top level"}
@@ -109,7 +112,7 @@ export function ManageMembers({ profiles }: { profiles: Profile[] }) {
         ))}
       </Card>
 
-      <Dialog open={Boolean(editing)} onClose={() => setEditing(null)} title={editing ? `Edit ${editing.name}` : ""}>
+      <Dialog open={Boolean(editing)} onClose={() => setEditing(null)} title={editing ? `Edit ${editing.email}` : ""}>
         <div className="space-y-4">
           <div>
             <Label htmlFor="edit-role">Role</Label>
@@ -127,7 +130,7 @@ export function ManageMembers({ profiles }: { profiles: Profile[] }) {
               <option value="">Top level (no manager)</option>
               {managerCandidates.map((m) => (
                 <option key={m.id} value={m.id}>
-                  {m.name} · {ROLE_LABELS[m.role]}
+                  {m.name} ({m.email}) · {ROLE_LABELS[m.role]}
                 </option>
               ))}
             </Select>
