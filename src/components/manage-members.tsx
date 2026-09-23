@@ -1,14 +1,14 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { Pencil } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { Dialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label, Select } from "@/components/ui/input";
 import { Avatar } from "@/components/avatar";
 import { RoleBadge } from "@/components/role-badge";
 import { Card } from "@/components/ui/card";
-import { updateMember } from "@/lib/actions/members";
+import { updateMember, removeMember } from "@/lib/actions/members";
 import { ROLE_LABELS, ROLE_ORDER } from "@/lib/permissions";
 import type { Profile, UserRole } from "@/lib/database.types";
 
@@ -29,12 +29,35 @@ function subtreeIds(rootId: string, childrenByManager: Map<string, Profile[]>) {
   return ids;
 }
 
-export function ManageMembers({ profiles }: { profiles: Profile[] }) {
+export function ManageMembers({
+  profiles,
+  currentUserId,
+}: {
+  profiles: Profile[];
+  currentUserId: string;
+}) {
   const [editing, setEditing] = useState<Profile | null>(null);
   const [role, setRole] = useState<UserRole>("intern");
   const [managerId, setManagerId] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [removingId, setRemovingId] = useState<string | null>(null);
+
+  function remove(p: Profile) {
+    if (!window.confirm(`Remove ${p.name} (${p.email})? They'll lose access, and any projects they own and tasks they created will be deleted.`)) {
+      return;
+    }
+    setRemovingId(p.id);
+    startTransition(async () => {
+      try {
+        await removeMember(p.id);
+      } catch (err) {
+        window.alert(err instanceof Error ? err.message : "Could not remove");
+      } finally {
+        setRemovingId(null);
+      }
+    });
+  }
 
   const byId = useMemo(() => new Map(profiles.map((p) => [p.id, p])), [profiles]);
   const childrenByManager = useMemo(() => {
@@ -104,10 +127,20 @@ export function ManageMembers({ profiles }: { profiles: Profile[] }) {
             <button
               onClick={() => openEdit(p)}
               className="shrink-0 rounded-md p-1 text-slate-300 hover:bg-slate-100 hover:text-slate-700"
-              aria-label={`Edit ${p.name}`}
+              aria-label={`Edit ${p.email}`}
             >
               <Pencil className="h-3.5 w-3.5" strokeWidth={2} />
             </button>
+            {p.id !== currentUserId && (
+              <button
+                onClick={() => remove(p)}
+                disabled={pending && removingId === p.id}
+                className="shrink-0 rounded-md p-1 text-slate-300 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                aria-label={`Remove ${p.email}`}
+              >
+                <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
+              </button>
+            )}
           </div>
         ))}
       </Card>

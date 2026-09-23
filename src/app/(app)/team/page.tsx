@@ -35,7 +35,9 @@ export default async function TeamPage() {
         </div>
       </div>
       <OrgTree profiles={(profiles ?? []) as Profile[]} />
-      {isTopManagement(profile.role) && <ManageMembers profiles={(profiles ?? []) as Profile[]} />}
+      {isTopManagement(profile.role) && (
+        <ManageMembers profiles={(profiles ?? []) as Profile[]} currentUserId={profile.id} />
+      )}
     </div>
   );
 }

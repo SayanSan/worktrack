@@ -80,3 +80,30 @@ export async function updateMember(
   revalidatePath("/team");
   revalidatePath("/dashboard");
 }
+
+// Top management removes a team member (deletes their profile). The person can
+// no longer access the app until re-invited. Backed by profiles_delete_admin.
+export async function removeMember(userId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+  if (userId === user.id) throw new Error("You can't remove yourself");
+
+  const { data: viewer, error: viewerError } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  if (viewerError || !viewer) throw new Error("Could not load your profile");
+  if (viewer.role !== "malik" && viewer.role !== "boss") {
+    throw new Error("Only top management can remove members");
+  }
+
+  const { error } = await supabase.from("profiles").delete().eq("id", userId);
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/team");
+  revalidatePath("/dashboard");
+}
