@@ -1,16 +1,25 @@
 import nodemailer from "nodemailer";
 
-// Sends via a real Gmail/Google Workspace mailbox (an "app password", not the
-// account password) instead of a transactional email provider — no domain
-// verification needed, and it can deliver to any recipient immediately.
-const GMAIL_USER = process.env.GMAIL_USER;
-const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
+// Provider-agnostic SMTP (Mailjet, Brevo, Gmail, etc.). Set these env vars:
+//   SMTP_HOST  e.g. in-v3.mailjet.com
+//   SMTP_PORT  587 (STARTTLS) or 465 (SSL); defaults to 587
+//   SMTP_USER  the SMTP username (for Mailjet: your API Key)
+//   SMTP_PASS  the SMTP password (for Mailjet: your Secret Key)
+//   SMTP_FROM  the From address (must be a sender the provider has verified)
+// Emails are skipped (not an error) if SMTP_HOST/USER/PASS are unset.
+const SMTP_HOST = process.env.SMTP_HOST;
+const SMTP_PORT = Number(process.env.SMTP_PORT ?? "587");
+const SMTP_USER = process.env.SMTP_USER;
+const SMTP_PASS = process.env.SMTP_PASS;
+const SMTP_FROM = process.env.SMTP_FROM ?? SMTP_USER;
 
 const transporter =
-  GMAIL_USER && GMAIL_APP_PASSWORD
+  SMTP_HOST && SMTP_USER && SMTP_PASS
     ? nodemailer.createTransport({
-        service: "gmail",
-        auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD },
+        host: SMTP_HOST,
+        port: SMTP_PORT,
+        secure: SMTP_PORT === 465,
+        auth: { user: SMTP_USER, pass: SMTP_PASS },
       })
     : null;
 
@@ -24,13 +33,13 @@ export async function sendTaskAssignedEmail(input: {
   appUrl: string;
 }) {
   if (!transporter) {
-    console.warn("GMAIL_USER / GMAIL_APP_PASSWORD not set — skipping task assignment email.");
+    console.warn("SMTP_HOST / SMTP_USER / SMTP_PASS not set — skipping task assignment email.");
     return;
   }
 
   try {
     await transporter.sendMail({
-      from: `WorkTrack <${GMAIL_USER}>`,
+      from: `WorkTrack <${SMTP_FROM}>`,
       to: input.to,
       subject: `New task assigned: ${input.taskTitle}`,
       html: `
