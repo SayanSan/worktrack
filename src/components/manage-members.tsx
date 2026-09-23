@@ -41,20 +41,19 @@ export function ManageMembers({
   const [managerId, setManagerId] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const [removingId, setRemovingId] = useState<string | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState<Profile | null>(null);
+  const [removeError, setRemoveError] = useState<string | null>(null);
 
-  function remove(p: Profile) {
-    if (!window.confirm(`Remove ${p.name} (${p.email})? They'll lose access, and any projects they own and tasks they created will be deleted.`)) {
-      return;
-    }
-    setRemovingId(p.id);
+  function doRemove() {
+    if (!confirmRemove) return;
+    const target = confirmRemove;
+    setRemoveError(null);
     startTransition(async () => {
       try {
-        await removeMember(p.id);
+        await removeMember(target.id);
+        setConfirmRemove(null);
       } catch (err) {
-        window.alert(err instanceof Error ? err.message : "Could not remove");
-      } finally {
-        setRemovingId(null);
+        setRemoveError(err instanceof Error ? err.message : "Could not remove");
       }
     });
   }
@@ -133,9 +132,8 @@ export function ManageMembers({
             </button>
             {p.id !== currentUserId && (
               <button
-                onClick={() => remove(p)}
-                disabled={pending && removingId === p.id}
-                className="shrink-0 rounded-md p-1 text-slate-300 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                onClick={() => { setConfirmRemove(p); setRemoveError(null); }}
+                className="shrink-0 rounded-md p-1 text-slate-300 hover:bg-red-50 hover:text-red-600"
                 aria-label={`Remove ${p.email}`}
               >
                 <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
@@ -175,6 +173,29 @@ export function ManageMembers({
             </Button>
             <Button type="button" onClick={save} disabled={pending}>
               {pending ? "Saving…" : "Save"}
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(confirmRemove)}
+        onClose={() => setConfirmRemove(null)}
+        title="Remove team member"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600">
+            Remove <strong>{confirmRemove?.name}</strong> ({confirmRemove?.email})? They&apos;ll lose
+            access, and any projects they own and tasks they created will be deleted. This can&apos;t
+            be undone.
+          </p>
+          {removeError && <p className="text-sm text-red-600">{removeError}</p>}
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="secondary" onClick={() => setConfirmRemove(null)}>
+              Cancel
+            </Button>
+            <Button type="button" variant="danger" onClick={doRemove} disabled={pending}>
+              {pending ? "Removing…" : "Remove"}
             </Button>
           </div>
         </div>
