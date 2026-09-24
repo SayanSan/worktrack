@@ -25,6 +25,37 @@ export function isTopManagement(role: UserRole) {
   return role === "malik" || role === "boss";
 }
 
+// Mirrors the DB's visible_user_ids(): top management sees everyone; anyone
+// else sees themselves + everyone below them in the manager_id chain. Used
+// for UI-side gating only (e.g. hiding actions that RLS would reject) — RLS
+// itself remains the real enforcement, so a stale/partial `profiles` list
+// here just means an occasional over-cautious hide, never a security hole.
+export function visibleDescendantIds(
+  profiles: { id: string; manager_id: string | null }[],
+  viewerId: string,
+  viewerRole: UserRole
+): Set<string> {
+  if (isTopManagement(viewerRole)) return new Set(profiles.map((p) => p.id));
+
+  const childrenByManager = new Map<string, string[]>();
+  for (const p of profiles) {
+    if (!p.manager_id) continue;
+    (childrenByManager.get(p.manager_id) ?? childrenByManager.set(p.manager_id, []).get(p.manager_id)!).push(p.id);
+  }
+
+  const visible = new Set<string>([viewerId]);
+  const queue = [viewerId];
+  while (queue.length > 0) {
+    const current = queue.pop()!;
+    for (const childId of childrenByManager.get(current) ?? []) {
+      if (visible.has(childId)) continue;
+      visible.add(childId);
+      queue.push(childId);
+    }
+  }
+  return visible;
+}
+
 export function canCreateProjects(role: UserRole) {
   return role === "malik" || role === "boss" || role === "manager";
 }

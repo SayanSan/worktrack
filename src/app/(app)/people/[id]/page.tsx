@@ -8,7 +8,7 @@ import { RoleBadge } from "@/components/role-badge";
 import { TaskList, type TaskWithAssignee } from "@/components/task-list";
 import { TaskFormDialog } from "@/components/task-form-dialog";
 import { Button } from "@/components/ui/button";
-import { ROLES_THAT_CAN_HAVE_REPORTS } from "@/lib/permissions";
+import { visibleDescendantIds } from "@/lib/permissions";
 
 export default async function PersonDetailPage({
   params,
@@ -37,10 +37,14 @@ export default async function PersonDetailPage({
   const p = allProfiles?.find((person) => person.id === id);
   if (!p) notFound();
   const managerProfile = p.manager_id ? allProfiles?.find((person) => person.id === p.manager_id) : null;
-  // Coarse client-side gate matching the DB rule for individual-task
-  // assignment (assignee must be in the assigner's reporting subtree, or the
-  // assigner is top management) — RLS is the real enforcement either way.
-  const canAssign = Boolean(viewer && ROLES_THAT_CAN_HAVE_REPORTS.includes(viewer.role));
+  // Individual (project-less) task assignment is RLS-gated to the assigner's
+  // own reporting subtree — since the org tree now shows the whole company,
+  // this has to match that rule exactly, or clicking "Assign task" on
+  // someone outside your subtree throws a raw RLS error instead of just not
+  // showing the button.
+  const canAssign = Boolean(
+    viewer && allProfiles && visibleDescendantIds(allProfiles, viewer.id, viewer.role).has(p.id)
+  );
 
   return (
     <div>
