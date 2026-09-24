@@ -6,11 +6,13 @@ import { Dialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label, Select } from "@/components/ui/input";
 import { createInviteLink } from "@/lib/actions/invite-links";
-import { ROLE_LABELS, INVITABLE_ROLES } from "@/lib/permissions";
+import { ROLE_LABELS, INVITABLE_ROLES, LINK_ROLES } from "@/lib/permissions";
 import type { UserRole } from "@/lib/database.types";
 
 export function InviteLinkDialog({ currentRole }: { currentRole: UserRole }) {
-  const invitableRoles = INVITABLE_ROLES[currentRole];
+  // Invite links only ever carry associate/intern (see LINK_ROLES) — narrower
+  // than INVITABLE_ROLES, which also covers the email-based invite path.
+  const invitableRoles = INVITABLE_ROLES[currentRole].filter((r) => LINK_ROLES.includes(r));
 
   const [open, setOpen] = useState(false);
   const [role, setRole] = useState<UserRole>(invitableRoles[0]);

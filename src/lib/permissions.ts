@@ -32,3 +32,8 @@ export function canCreateProjects(role: UserRole) {
 export function canInvite(role: UserRole) {
   return INVITABLE_ROLES[role].length > 0;
 }
+
+// Invite *links* (as opposed to the email-based invite) are only ever minted
+// for associate/intern — matches the invite_links_insert RLS check. Higher
+// roles go through the email invite instead, which is more auditable.
+export const LINK_ROLES: UserRole[] = ["associate", "intern"];
