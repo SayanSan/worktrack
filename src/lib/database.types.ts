@@ -235,6 +235,10 @@ export type Database = {
         Args: { p_endpoint: string };
         Returns: undefined;
       };
+      manager_chain: {
+        Args: { target: string };
+        Returns: { id: string; name: string; email: string }[];
+      };
     };
     Enums: {
       user_role: UserRole;

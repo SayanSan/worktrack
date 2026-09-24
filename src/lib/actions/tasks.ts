@@ -20,20 +20,27 @@ async function notifyAssignee(
 ) {
   if (input.assigneeId === input.assignedById) return; // don't email yourself
 
-  const [{ data: assignee }, { data: assignedBy }, { data: project }, appUrl] = await Promise.all([
+  const [{ data: assignee }, { data: assignedBy }, { data: project }, { data: chain }, appUrl] = await Promise.all([
     supabase.from("profiles").select("name, email").eq("id", input.assigneeId).single(),
     supabase.from("profiles").select("name").eq("id", input.assignedById).single(),
     supabase.from("projects").select("name").eq("id", input.projectId).single(),
+    supabase.rpc("manager_chain", { target: input.assigneeId }),
     getAppUrl(),
   ]);
 
   const projectName = project?.name ?? "a project";
   const assignedByName = assignedBy?.name ?? "Someone";
+  // CC the assignee's manager(s) and boss so leadership stays in the loop —
+  // but not the person who just made the assignment themselves.
+  const cc = (chain ?? [])
+    .filter((person) => person.id !== input.assignedById && person.email)
+    .map((person) => person.email as string);
 
   await Promise.all([
     assignee?.email
       ? sendTaskAssignedEmail({
           to: assignee.email,
+          cc,
           assigneeName: assignee.name,
           taskTitle: input.taskTitle,
           projectName,

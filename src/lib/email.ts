@@ -25,6 +25,7 @@ const transporter =
 
 export async function sendTaskAssignedEmail(input: {
   to: string;
+  cc?: string[];
   assigneeName: string;
   taskTitle: string;
   projectName: string;
@@ -41,6 +42,7 @@ export async function sendTaskAssignedEmail(input: {
     await transporter.sendMail({
       from: `WorkTrack <${SMTP_FROM}>`,
       to: input.to,
+      cc: input.cc?.length ? input.cc : undefined,
       subject: `New task assigned: ${input.taskTitle}`,
       html: `
         <div style="font-family: -apple-system, sans-serif; max-width: 480px; margin: 0 auto;">
