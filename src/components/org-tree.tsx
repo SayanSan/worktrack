@@ -6,8 +6,10 @@ import { EmptyState } from "@/components/empty-state";
 import { Card } from "@/components/ui/card";
 import type { Profile } from "@/lib/database.types";
 
-function buildTree(profiles: Profile[]) {
-  const byManager = new Map<string | null, Profile[]>();
+export type OrgTreeProfile = Pick<Profile, "id" | "name" | "role" | "manager_id">;
+
+function buildTree(profiles: OrgTreeProfile[]) {
+  const byManager = new Map<string | null, OrgTreeProfile[]>();
   for (const p of profiles) {
     const key = p.manager_id;
     if (!byManager.has(key)) byManager.set(key, []);
@@ -22,8 +24,8 @@ function TreeNode({
   byManager,
   depth,
 }: {
-  profile: Profile;
-  byManager: Map<string | null, Profile[]>;
+  profile: OrgTreeProfile;
+  byManager: Map<string | null, OrgTreeProfile[]>;
   depth: number;
 }) {
   const children = byManager.get(profile.id) ?? [];
@@ -49,7 +51,7 @@ function TreeNode({
   );
 }
 
-export function OrgTree({ profiles }: { profiles: Profile[] }) {
+export function OrgTree({ profiles }: { profiles: OrgTreeProfile[] }) {
   const byManager = buildTree(profiles);
   const visibleIds = new Set(profiles.map((p) => p.id));
   // Roots: no manager, or manager not visible to this viewer.

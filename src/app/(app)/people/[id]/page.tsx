@@ -9,7 +9,6 @@ import { TaskList, type TaskWithAssignee } from "@/components/task-list";
 import { TaskFormDialog } from "@/components/task-form-dialog";
 import { Button } from "@/components/ui/button";
 import { ROLES_THAT_CAN_HAVE_REPORTS } from "@/lib/permissions";
-import type { Profile } from "@/lib/database.types";
 
 export default async function PersonDetailPage({
   params,
@@ -19,26 +18,25 @@ export default async function PersonDetailPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: profile }, { data: manager }, { data: tasks }, { data: visibleProfiles }, viewer] =
-    await Promise.all([
-      supabase.from("profiles").select("*").eq("id", id).maybeSingle(),
-      supabase
-        .from("profiles")
-        .select("manager:profiles!profiles_manager_id_fkey(id, name, role)")
-        .eq("id", id)
-        .maybeSingle(),
-      supabase
-        .from("tasks")
-        .select("*, assignee:profiles!tasks_assignee_id_fkey(id, name), project:projects(id, name)")
-        .eq("assignee_id", id)
-        .order("created_at", { ascending: false }),
-      supabase.from("profiles").select("id, name"),
-      getCurrentProfile(),
-    ]);
+  // Basic identity (name/role/manager) comes from org_tree_profiles, which
+  // bypasses the usual hierarchy-scoped visibility — same as the /team org
+  // chart, so clicking through from there never 404s just because the
+  // viewer's own visible_user_ids doesn't reach this person. Their task list
+  // below stays fully RLS-scoped as normal.
+  const [{ data: allProfiles }, { data: tasks }, { data: visibleProfiles }, viewer] = await Promise.all([
+    supabase.rpc("org_tree_profiles"),
+    supabase
+      .from("tasks")
+      .select("*, assignee:profiles!tasks_assignee_id_fkey(id, name), project:projects(id, name)")
+      .eq("assignee_id", id)
+      .order("created_at", { ascending: false }),
+    supabase.from("profiles").select("id, name"),
+    getCurrentProfile(),
+  ]);
 
-  if (!profile) notFound();
-  const p = profile as Profile;
-  const managerProfile = (manager?.manager ?? null) as unknown as Profile | null;
+  const p = allProfiles?.find((person) => person.id === id);
+  if (!p) notFound();
+  const managerProfile = p.manager_id ? allProfiles?.find((person) => person.id === p.manager_id) : null;
   // Coarse client-side gate matching the DB rule for individual-task
   // assignment (assignee must be in the assigner's reporting subtree, or the
   // assigner is top management) — RLS is the real enforcement either way.

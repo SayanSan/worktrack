@@ -239,6 +239,10 @@ export type Database = {
         Args: { target: string };
         Returns: { id: string; name: string; email: string }[];
       };
+      org_tree_profiles: {
+        Args: Record<string, never>;
+        Returns: { id: string; name: string; role: UserRole; manager_id: string | null }[];
+      };
     };
     Enums: {
       user_role: UserRole;

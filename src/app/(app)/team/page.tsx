@@ -10,7 +10,10 @@ import type { Profile } from "@/lib/database.types";
 export default async function TeamPage() {
   const supabase = await createClient();
   const profile = await getCurrentProfile();
-  const { data: profiles } = await supabase.from("profiles").select("*");
+  const [{ data: profiles }, { data: orgTreeProfiles }] = await Promise.all([
+    supabase.from("profiles").select("*"),
+    supabase.rpc("org_tree_profiles"),
+  ]);
 
   if (!profile) return null;
 
@@ -34,7 +37,7 @@ export default async function TeamPage() {
           />
         </div>
       </div>
-      <OrgTree profiles={(profiles ?? []) as Profile[]} />
+      <OrgTree profiles={orgTreeProfiles ?? []} />
       {isTopManagement(profile.role) && (
         <ManageMembers profiles={(profiles ?? []) as Profile[]} currentUserId={profile.id} />
       )}
