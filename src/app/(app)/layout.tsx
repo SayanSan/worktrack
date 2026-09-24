@@ -5,6 +5,7 @@ import { RoleBadge } from "@/components/role-badge";
 import { Avatar } from "@/components/avatar";
 import { MainNav, MobileNav } from "@/components/main-nav";
 import { OnboardingTour } from "@/components/onboarding-tour";
+import { PushNotifications } from "@/components/push-notifications";
 import { signOut } from "@/lib/actions/auth";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -77,6 +78,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <main className="mx-auto max-w-6xl px-4 pt-6 pb-24 sm:pb-6">{children}</main>
       <MobileNav />
       {!profile.onboarded && <OnboardingTour />}
+      {profile.onboarded && <PushNotifications />}
     </div>
   );
 }

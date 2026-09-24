@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { sendTaskAssignedEmail } from "@/lib/email";
+import { sendTaskAssignedPush } from "@/lib/push";
 import type { TaskPriority, TaskStatus } from "@/lib/database.types";
 
 async function getAppUrl() {
@@ -26,17 +27,30 @@ async function notifyAssignee(
     getAppUrl(),
   ]);
 
-  if (!assignee?.email) return;
+  const projectName = project?.name ?? "a project";
+  const assignedByName = assignedBy?.name ?? "Someone";
 
-  await sendTaskAssignedEmail({
-    to: assignee.email,
-    assigneeName: assignee.name,
-    taskTitle: input.taskTitle,
-    projectName: project?.name ?? "a project",
-    assignedByName: assignedBy?.name ?? "Someone",
-    dueDate: input.dueDate,
-    appUrl,
-  });
+  await Promise.all([
+    assignee?.email
+      ? sendTaskAssignedEmail({
+          to: assignee.email,
+          assigneeName: assignee.name,
+          taskTitle: input.taskTitle,
+          projectName,
+          assignedByName,
+          dueDate: input.dueDate,
+          appUrl,
+        })
+      : Promise.resolve(),
+    sendTaskAssignedPush(supabase, {
+      userId: input.assigneeId,
+      title: `New task: ${input.taskTitle}`,
+      body: `${assignedByName} assigned you a task in ${projectName}${
+        input.dueDate ? ` — due ${input.dueDate}` : ""
+      }`,
+      url: `${appUrl}/tasks`,
+    }),
+  ]);
 }
 
 export async function createTask(input: {

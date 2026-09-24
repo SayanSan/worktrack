@@ -62,6 +62,15 @@ export type InviteLink = {
   created_at: string;
 };
 
+export type PushSubscriptionRow = {
+  id: string;
+  user_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  created_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -184,6 +193,25 @@ export type Database = {
           },
         ];
       };
+      push_subscriptions: {
+        Row: PushSubscriptionRow;
+        Insert: Partial<PushSubscriptionRow> & {
+          user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+        };
+        Update: Partial<PushSubscriptionRow>;
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -198,6 +226,14 @@ export type Database = {
       invite_link_info: {
         Args: { p_token: string };
         Returns: { role: UserRole; inviter_name: string; valid: boolean }[];
+      };
+      get_push_subscriptions: {
+        Args: { target: string };
+        Returns: { endpoint: string; p256dh: string; auth: string }[];
+      };
+      delete_push_subscription: {
+        Args: { p_endpoint: string };
+        Returns: undefined;
       };
     };
     Enums: {
