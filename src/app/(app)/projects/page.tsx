@@ -33,6 +33,7 @@ export default async function ProjectsPage() {
 
   const countsByProject: Record<string, Record<TaskStatus, number>> = {};
   for (const t of tasks ?? []) {
+    if (!t.project_id) continue; // individual tasks aren't scoped to a project
     const counts = (countsByProject[t.project_id] ??= { ...EMPTY_COUNTS });
     counts[t.status as TaskStatus]++;
   }

@@ -11,6 +11,7 @@ import type { TaskWithAssignee } from "@/components/task-list";
 
 export function TaskFormDialog({
   projectId,
+  defaultAssigneeId,
   assignees,
   trigger,
   task,
@@ -18,6 +19,7 @@ export function TaskFormDialog({
   onOpenChange,
 }: {
   projectId?: string;
+  defaultAssigneeId?: string;
   assignees: { id: string; name: string }[];
   trigger?: React.ReactNode;
   task?: TaskWithAssignee;
@@ -31,7 +33,7 @@ export function TaskFormDialog({
 
   const [title, setTitle] = useState(task?.title ?? "");
   const [description, setDescription] = useState(task?.description ?? "");
-  const [assigneeId, setAssigneeId] = useState(task?.assignee_id ?? "");
+  const [assigneeId, setAssigneeId] = useState(task?.assignee_id ?? defaultAssigneeId ?? "");
   const [priority, setPriority] = useState<TaskPriority>(task?.priority ?? "medium");
   const [dueDate, setDueDate] = useState(task?.due_date ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +42,7 @@ export function TaskFormDialog({
   function reset() {
     setTitle("");
     setDescription("");
-    setAssigneeId("");
+    setAssigneeId(defaultAssigneeId ?? "");
     setPriority("medium");
     setDueDate("");
   }
@@ -58,9 +60,9 @@ export function TaskFormDialog({
             priority,
             dueDate: dueDate || null,
           });
-        } else if (projectId) {
+        } else {
           await createTask({
-            projectId,
+            projectId: projectId ?? null,
             title,
             description,
             assigneeId: assigneeId || null,

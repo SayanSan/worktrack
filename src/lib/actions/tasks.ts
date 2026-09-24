@@ -16,19 +16,27 @@ async function getAppUrl() {
 
 async function notifyAssignee(
   supabase: Awaited<ReturnType<typeof createClient>>,
-  input: { assigneeId: string; assignedById: string; projectId: string; taskTitle: string; dueDate: string | null }
+  input: {
+    assigneeId: string;
+    assignedById: string;
+    projectId: string | null;
+    taskTitle: string;
+    dueDate: string | null;
+  }
 ) {
   if (input.assigneeId === input.assignedById) return; // don't email yourself
 
   const [{ data: assignee }, { data: assignedBy }, { data: project }, { data: chain }, appUrl] = await Promise.all([
     supabase.from("profiles").select("name, email").eq("id", input.assigneeId).single(),
     supabase.from("profiles").select("name").eq("id", input.assignedById).single(),
-    supabase.from("projects").select("name").eq("id", input.projectId).single(),
+    input.projectId
+      ? supabase.from("projects").select("name").eq("id", input.projectId).single()
+      : Promise.resolve({ data: null }),
     supabase.rpc("manager_chain", { target: input.assigneeId }),
     getAppUrl(),
   ]);
 
-  const projectName = project?.name ?? "a project";
+  const projectName = project?.name ?? null;
   const assignedByName = assignedBy?.name ?? "Someone";
   // CC the assignee's manager(s) and boss so leadership stays in the loop —
   // but not the person who just made the assignment themselves.
@@ -52,7 +60,7 @@ async function notifyAssignee(
     sendTaskAssignedPush(supabase, {
       userId: input.assigneeId,
       title: `New task: ${input.taskTitle}`,
-      body: `${assignedByName} assigned you a task in ${projectName}${
+      body: `${assignedByName} assigned you a task${projectName ? ` in ${projectName}` : ""}${
         input.dueDate ? ` — due ${input.dueDate}` : ""
       }`,
       url: `${appUrl}/tasks`,
@@ -61,7 +69,7 @@ async function notifyAssignee(
 }
 
 export async function createTask(input: {
-  projectId: string;
+  projectId?: string | null;
   title: string;
   description?: string;
   assigneeId?: string | null;
@@ -74,8 +82,10 @@ export async function createTask(input: {
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
 
+  const projectId = input.projectId || null;
+
   const { error } = await supabase.from("tasks").insert({
-    project_id: input.projectId,
+    project_id: projectId,
     title: input.title,
     description: input.description || null,
     assignee_id: input.assigneeId || null,
@@ -91,14 +101,15 @@ export async function createTask(input: {
     await notifyAssignee(supabase, {
       assigneeId: input.assigneeId,
       assignedById: user.id,
-      projectId: input.projectId,
+      projectId,
       taskTitle: input.title,
       dueDate: input.dueDate || null,
     });
+    revalidatePath(`/people/${input.assigneeId}`);
   }
 
   revalidatePath("/dashboard");
-  revalidatePath(`/projects/${input.projectId}`);
+  if (projectId) revalidatePath(`/projects/${projectId}`);
   revalidatePath("/tasks");
 }
 
@@ -156,6 +167,7 @@ export async function updateTask(
       taskTitle: input.title ?? existing.title,
       dueDate: input.dueDate !== undefined ? input.dueDate : existing.due_date,
     });
+    revalidatePath(`/people/${newAssigneeId}`);
   }
 
   revalidatePath("/dashboard");

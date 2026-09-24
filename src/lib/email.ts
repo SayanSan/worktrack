@@ -28,7 +28,7 @@ export async function sendTaskAssignedEmail(input: {
   cc?: string[];
   assigneeName: string;
   taskTitle: string;
-  projectName: string;
+  projectName: string | null;
   assignedByName: string;
   dueDate: string | null;
   appUrl: string;
@@ -47,7 +47,9 @@ export async function sendTaskAssignedEmail(input: {
       html: `
         <div style="font-family: -apple-system, sans-serif; max-width: 480px; margin: 0 auto;">
           <p>Hi ${input.assigneeName},</p>
-          <p><strong>${input.assignedByName}</strong> assigned you a task in <strong>${input.projectName}</strong>:</p>
+          <p><strong>${input.assignedByName}</strong> assigned you a task${
+            input.projectName ? ` in <strong>${input.projectName}</strong>` : ""
+          }:</p>
           <table style="width: 100%; background: #f8fafc; border-radius: 8px; padding: 16px; margin: 16px 0;">
             <tr><td style="font-size: 16px; font-weight: 600; padding-bottom: 8px;">${input.taskTitle}</td></tr>
             ${input.dueDate ? `<tr><td style="color: #64748b; font-size: 13px;">Due ${input.dueDate}</td></tr>` : ""}

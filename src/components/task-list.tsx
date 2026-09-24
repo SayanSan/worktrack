@@ -20,6 +20,7 @@ const STATUS_GROUPS: { status: TaskStatus; label: string }[] = [
 
 export interface TaskWithAssignee extends Task {
   assignee: { id: string; name: string } | null;
+  project?: { id: string; name: string } | null;
 }
 
 export function TaskList({
@@ -57,6 +58,9 @@ export function TaskList({
                     <p className="truncate text-sm text-slate-800">{task.title}</p>
                     <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-400">
                       <PriorityBadge priority={task.priority} />
+                      {task.project !== undefined && (
+                        <span className="truncate">{task.project ? task.project.name : "Individual task"}</span>
+                      )}
                       {task.due_date && <span>Due {formatDueDate(task.due_date)}</span>}
                     </div>
                   </div>

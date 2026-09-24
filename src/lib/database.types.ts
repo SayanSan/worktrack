@@ -31,7 +31,7 @@ export type ProjectMember = {
 
 export type Task = {
   id: string;
-  project_id: string;
+  project_id: string | null;
   title: string;
   description: string | null;
   status: TaskStatus;
@@ -125,7 +125,7 @@ export type Database = {
       };
       tasks: {
         Row: Task;
-        Insert: Partial<Task> & { project_id: string; title: string; created_by: string };
+        Insert: Partial<Task> & { title: string; created_by: string };
         Update: Partial<Task>;
         Relationships: [
           {
