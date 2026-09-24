@@ -6,13 +6,15 @@ import { Dialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label, Select } from "@/components/ui/input";
 import { addProjectMember } from "@/lib/actions/projects";
+import { ROLE_LABELS } from "@/lib/permissions";
+import type { UserRole } from "@/lib/database.types";
 
 export function AddMemberDialog({
   projectId,
   candidates,
 }: {
   projectId: string;
-  candidates: { id: string; name: string }[];
+  candidates: { id: string; name: string; role: UserRole }[];
 }) {
   const [open, setOpen] = useState(false);
   const [userId, setUserId] = useState(candidates[0]?.id ?? "");
@@ -47,10 +49,13 @@ export function AddMemberDialog({
             <Select id="member" value={userId} onChange={(e) => setUserId(e.target.value)}>
               {candidates.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name}
+                  {c.name} · {ROLE_LABELS[c.role]}
                 </option>
               ))}
             </Select>
+            <p className="mt-1.5 text-xs text-slate-400">
+              Includes your own team and other managers — add a manager to bring their team in too.
+            </p>
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div className="flex justify-end gap-2">

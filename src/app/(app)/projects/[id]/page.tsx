@@ -28,7 +28,7 @@ export default async function ProjectDetailPage({
         .select("*, assignee:profiles!tasks_assignee_id_fkey(id, name)")
         .eq("project_id", id)
         .order("created_at", { ascending: false }),
-      supabase.from("profiles").select("id, name"),
+      supabase.from("profiles").select("id, name, role"),
     ]);
 
   if (!project) notFound();
@@ -42,6 +42,14 @@ export default async function ProjectDetailPage({
 
   const canManage = Boolean(
     profile && (profile.role === "malik" || profile.role === "boss" || profile.id === (project as Project).owner_id)
+  );
+
+  // Beyond the owner/top management, any current non-intern member can bring
+  // in their own team — that's what makes cross-team collaboration on a
+  // shared project possible. Backed by the relaxed project_members_insert
+  // policy (0010_project_collaboration.sql).
+  const canAddMembers = Boolean(
+    canManage || (profile && profile.role !== "intern" && memberIds.has(profile.id))
   );
 
   return (
@@ -80,7 +88,7 @@ export default async function ProjectDetailPage({
         <div>
           <div className="mb-2 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-700">Members</h2>
-            {canManage && <AddMemberDialog projectId={id} candidates={candidates} />}
+            {canAddMembers && <AddMemberDialog projectId={id} candidates={candidates} />}
           </div>
           <ul className="space-y-2">
             {members.map((m) => (
