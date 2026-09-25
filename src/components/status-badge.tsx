@@ -9,7 +9,7 @@ const TASK_STATUS_STYLES: Record<TaskStatus, string> = {
   done: "bg-emerald-100 text-emerald-700",
 };
 
-const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
+export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
   todo: "To do",
   in_progress: "In progress",
   in_review: "In review",

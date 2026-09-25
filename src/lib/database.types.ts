@@ -62,6 +62,13 @@ export type InviteLink = {
   created_at: string;
 };
 
+export type ActivityLog = {
+  id: string;
+  actor_id: string;
+  message: string;
+  created_at: string;
+};
+
 export type PushSubscriptionRow = {
   id: string;
   user_id: string;
@@ -187,6 +194,20 @@ export type Database = {
           {
             foreignKeyName: "invite_links_created_by_fkey";
             columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      activity_log: {
+        Row: ActivityLog;
+        Insert: Partial<ActivityLog> & { actor_id: string; message: string };
+        Update: Partial<ActivityLog>;
+        Relationships: [
+          {
+            foreignKeyName: "activity_log_actor_id_fkey";
+            columns: ["actor_id"];
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];
