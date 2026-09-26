@@ -7,7 +7,9 @@ import { RoleBadge } from "@/components/role-badge";
 import { ProjectStatusBadge } from "@/components/status-badge";
 import { TaskFormDialog } from "@/components/task-form-dialog";
 import { AddMemberDialog } from "@/components/add-member-dialog";
+import { DeleteProjectButton } from "@/components/delete-project-button";
 import { TaskList, type TaskWithAssignee } from "@/components/task-list";
+import { canManageAll } from "@/lib/permissions";
 import type { Profile, Project } from "@/lib/database.types";
 
 export default async function ProjectDetailPage({
@@ -43,6 +45,10 @@ export default async function ProjectDetailPage({
   const canManage = Boolean(
     profile && (profile.role === "malik" || profile.role === "boss" || profile.id === (project as Project).owner_id)
   );
+  // Broader than canManage: every role except Intern can delete any task or
+  // project outright, regardless of ownership — matches can_manage_all() in
+  // the DB. This only affects deletion, not editing.
+  const canDeleteAnything = Boolean(profile && canManageAll(profile.role));
 
   // Beyond the owner/top management, any current non-intern member can bring
   // in their own team — that's what makes cross-team collaboration on a
@@ -68,10 +74,15 @@ export default async function ProjectDetailPage({
             <p className="max-w-xl text-sm text-slate-500">{(project as Project).description}</p>
           )}
         </div>
-        <TaskFormDialog
-          projectId={id}
-          assignees={members.map((m) => ({ id: m.id, name: m.name }))}
-        />
+        <div className="flex items-center gap-2">
+          <TaskFormDialog
+            projectId={id}
+            assignees={members.map((m) => ({ id: m.id, name: m.name }))}
+          />
+          {(canManage || canDeleteAnything) && (
+            <DeleteProjectButton projectId={id} projectName={(project as Project).name} />
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_260px]">
@@ -79,7 +90,7 @@ export default async function ProjectDetailPage({
           <h2 className="mb-3 text-sm font-semibold text-slate-700">Tasks</h2>
           <TaskList
             tasks={(tasks ?? []) as TaskWithAssignee[]}
-            canDelete={canManage}
+            canDelete={canManage || canDeleteAnything}
             canEdit={canManage}
             assignees={members.map((m) => ({ id: m.id, name: m.name }))}
           />

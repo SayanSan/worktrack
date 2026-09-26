@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentProfile } from "@/lib/current-user";
+import { logActivity } from "@/lib/activity";
 import type { ProjectStatus } from "@/lib/database.types";
 
 export async function createProject(input: { name: string; description?: string }) {
@@ -53,4 +55,23 @@ export async function removeProjectMember(projectId: string, userId: string) {
     .eq("user_id", userId);
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}`);
+}
+
+export async function deleteProject(projectId: string) {
+  const supabase = await createClient();
+  const actor = await getCurrentProfile();
+  if (!actor) throw new Error("Not authenticated");
+
+  const { data: existing } = await supabase.from("projects").select("name").eq("id", projectId).single();
+
+  const { error } = await supabase.from("projects").delete().eq("id", projectId);
+  if (error) throw new Error(error.message);
+
+  if (existing) {
+    await logActivity(supabase, actor.id, `${actor.name} deleted project "${existing.name}"`);
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/projects");
+  redirect("/projects");
 }

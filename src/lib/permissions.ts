@@ -60,6 +60,13 @@ export function canCreateProjects(role: UserRole) {
   return role === "malik" || role === "boss" || role === "manager";
 }
 
+// Every role except Intern can delete any task or project, regardless of
+// ownership or reporting hierarchy — matches the DB's can_manage_all().
+const CAN_MANAGE_ALL_ROLES: UserRole[] = ["malik", "boss", "manager", "associate"];
+export function canManageAll(role: UserRole) {
+  return CAN_MANAGE_ALL_ROLES.includes(role);
+}
+
 export function canInvite(role: UserRole) {
   return INVITABLE_ROLES[role].length > 0;
 }

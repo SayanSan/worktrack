@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/current-user";
 import { TaskList, type TaskWithAssignee } from "@/components/task-list";
+import { canManageAll } from "@/lib/permissions";
 
 export default async function MyTasksPage() {
   const supabase = await createClient();
@@ -23,6 +24,7 @@ export default async function MyTasksPage() {
       <TaskList
         tasks={(tasks ?? []) as TaskWithAssignee[]}
         canEdit
+        canDelete={canManageAll(profile.role)}
         assignees={visibleProfiles ?? []}
       />
     </div>

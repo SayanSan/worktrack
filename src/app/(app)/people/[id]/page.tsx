@@ -8,7 +8,7 @@ import { RoleBadge } from "@/components/role-badge";
 import { TaskList, type TaskWithAssignee } from "@/components/task-list";
 import { TaskFormDialog } from "@/components/task-form-dialog";
 import { Button } from "@/components/ui/button";
-import { visibleDescendantIds } from "@/lib/permissions";
+import { visibleDescendantIds, canManageAll } from "@/lib/permissions";
 
 export default async function PersonDetailPage({
   params,
@@ -88,6 +88,7 @@ export default async function PersonDetailPage({
       <TaskList
         tasks={(tasks ?? []) as TaskWithAssignee[]}
         canEdit
+        canDelete={Boolean(viewer && canManageAll(viewer.role))}
         assignees={visibleProfiles ?? []}
       />
     </div>
